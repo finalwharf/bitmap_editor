@@ -3,7 +3,7 @@ require_relative 'errors'
 require_relative 'bitmap_image'
 
 class BitmapEditor # :nodoc:
-  attr_accessor :running, :image, :command, :options
+  attr_accessor :image, :command, :options
 
   # Supported commands and number of required options
   COMMANDS_AND_OPTION_LENGTHS = {
@@ -17,12 +17,15 @@ class BitmapEditor # :nodoc:
     'X' => 0  # X
   }.freeze
 
+  def running=(running); @running = running; end
+  def running?; @running; end
+
   def run
     self.running = true
 
     puts 'Type ? for help.'
 
-    while running
+    while running?
       input = prompt_command
 
       self.command = action_for_command(input)
@@ -47,8 +50,9 @@ class BitmapEditor # :nodoc:
 
   def execute_command
     case command
-    when 'I' then create_new_image
+    when 'I' then create_image
     when 'S' then show_image
+    when 'C' then clear_image
     when '?' then show_help
     when 'X' then exit_console
     end
@@ -65,7 +69,7 @@ class BitmapEditor # :nodoc:
     COMMANDS_AND_OPTION_LENGTHS[command] == options.length
   end
 
-  def create_new_image
+  def create_image
     rows = options.first.to_i
     cols = options.last.to_i
     self.image = BitmapImage.new(rows, cols)
@@ -75,6 +79,11 @@ class BitmapEditor # :nodoc:
   def show_image
     raise MissingBitmapImageError unless image
     puts image.to_s
+  end
+
+  def clear_image
+    raise MissingBitmapImageError unless image
+    image.clear
   end
 
   def prompt_command(text = '')

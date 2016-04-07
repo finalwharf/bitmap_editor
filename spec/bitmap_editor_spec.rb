@@ -4,52 +4,100 @@ require 'bitmap_editor'
 require 'bitmap_image'
 
 describe BitmapEditor do
+
+  def send_command(command, &block)
+    allow(Readline).to receive(:readline).and_return(command)
+    allow(subject).to receive(:running?).and_return(true, false)
+    expect(STDOUT).to receive(:puts).with 'Type ? for help.'
+
+    yield if block_given?
+
+    subject.run
+  end
+
   describe 'Image creation' do
     context 'with valid parameters' do
-      let(:expected_image) { [%w(O O O), %w(O O O), %w(O O O)] }
-
-      it 'creates a new image and exits' do
-        allow(Readline).to receive(:readline).and_return('I 3 3', 'X')
-        expect(subject).to receive(:puts).with('Type ? for help.')
-        expect(subject).to receive(:puts).with('Image created successfully.')
-        expect(subject).to receive(:puts).with('Goodbye!')
-        subject.run
-        expect(subject.image.pixels).to eq expected_image
+      it 'creates a new image' do
+        send_command('I 3 3') do
+          expect(STDOUT).to receive(:puts).with 'Image created successfully.'
+          expect(subject).to receive(:create_image).and_call_original
+          expect(subject).to receive(:image=).and_call_original
+        end
       end
     end
 
     context 'with invalid parameters' do
-      it 'prints error message and exits' do
-        allow(Readline).to receive(:readline).and_return('I', 'X')
-        expect(subject).to receive(:puts).with('Type ? for help.')
-        expect(subject).to receive(:puts).with('Command `I` required 2 parameters! Type `?` for help.')
-        expect(subject).to receive(:puts).with('Goodbye!')
-        subject.run
-        expect(subject.image).to be_nil
+      it 'prints an error message' do
+        send_command('I') do
+          message = 'Command `I` required 2 parameters! Type `?` for help.'
+          expect(STDOUT).to receive(:puts).with message
+          expect(subject).to_not receive(:create_image)
+        end
       end
     end
   end
 
   describe 'Displaying image' do
     context 'when present' do
-      let(:expected_image) { [%w(O O O), %w(O O O), %w(O O O)] }
-      it 'show a 3x3 image ' do
-        allow(Readline).to receive(:readline).and_return('I 3 3', 'S', 'X')
-        expect(subject).to receive(:puts).with('Type ? for help.')
-        expect(subject).to receive(:puts).with('Image created successfully.')
-        expect(subject).to receive(:puts).with("OOO\nOOO\nOOO")
-        expect(subject).to receive(:puts).with('Goodbye!')
-        subject.run
+      it 'show the image ' do
+        send_command('S') do
+          image = BitmapImage.new(3, 3)
+          allow(subject).to receive(:image).and_return(image)
+          expect(subject).to receive(:show_image).and_call_original
+          expect(STDOUT).to receive(:puts).with("OOO\nOOO\nOOO")
+        end
       end
     end
 
     context 'when not present' do
       it 'shows an error message' do
-        allow(Readline).to receive(:readline).and_return('S', 'X')
-        expect(subject).to receive(:puts).with('Type ? for help.')
-        expect(subject).to receive(:puts).with('No image to work with!')
-        expect(subject).to receive(:puts).with('Goodbye!')
-        subject.run
+        send_command('S') do
+          expect(subject).to receive(:show_image).and_call_original
+          expect(STDOUT).to receive(:puts).with('No image to work with!')
+        end
+      end
+    end
+  end
+
+  describe 'Clearing image' do
+    context 'when present' do
+      it 'clears the image' do
+        send_command('C') do
+          image = BitmapImage.new(3, 3)
+          allow(subject).to receive(:image).and_return(image)
+          expect(subject).to receive(:clear_image).and_call_original
+          expect(subject.image).to receive(:clear)
+        end
+      end
+    end
+
+    context 'when not present' do
+      it 'shows an error message' do
+        send_command('C') do
+          expect(subject).to receive(:clear_image).and_call_original
+          expect(STDOUT).to receive(:puts).with('No image to work with!')
+        end
+      end
+    end
+  end
+
+  describe 'Exiting the editor' do
+    context 'when command is correct' do
+      it 'exits the application ' do
+        send_command('X') do
+          expect(subject).to receive(:exit_console).and_call_original
+          expect(STDOUT).to receive(:puts).with('Goodbye!')
+        end
+      end
+    end
+
+    context 'when command is incorrect' do
+      it 'prints error message' do
+        send_command('X X') do
+          expect(subject).to_not receive(:exit_console)
+          error_message = 'Command `X` required 0 parameters! Type `?` for help.'
+          expect(STDOUT).to receive(:puts).with(error_message)
+        end
       end
     end
   end

@@ -42,4 +42,13 @@ describe BitmapImage do
       expect(subject.to_s).to eq outout
     end
   end
+
+  context '#clear' do
+    it 'clears the image' do
+      image = BitmapImage.new(3, 3)
+      image.pixels[1] = ['X', 'X', 'X']
+      image.clear
+      expect(image.pixels[1]).to eq ['O', 'O', 'O']
+    end
+  end
 end

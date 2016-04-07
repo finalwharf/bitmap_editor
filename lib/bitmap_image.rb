@@ -12,13 +12,16 @@ class BitmapImage # :nodoc:
 
     raise InvalidBitmapBoundsError unless valid_dimensions?
 
-    self.pixels = Array.new(rows) do
-      Array.new(cols, DEFAULT_COLOUR)
-    end
+    self.pixels = Array.new(rows) { Array.new(cols, DEFAULT_COLOUR) }
   end
 
   def valid_dimensions?
     VALID_DIMENSIONS.include?(rows) && VALID_DIMENSIONS.include?(cols)
+  end
+
+  def clear
+    raise MissingBitmapImageError unless pixels
+    pixels.each { |row| row.fill(DEFAULT_COLOUR) }
   end
 
   def to_s

@@ -12,10 +12,16 @@ class MissingBitmapImageError < BitmapError # :nodoc:
   end
 end
 
-class InvalidBitmapBoundsError < BitmapError # :nodoc:
+class InvalidBitmapSizeError < BitmapError # :nodoc:
   def message
-    min = BitmapImage::VALID_DIMENSIONS.first
-    max = BitmapImage::VALID_DIMENSIONS.last
-    "Invalid bounds! Must be between #{min} and #{max}."
+    min = BitmapImage::MIN_SIZE
+    max = BitmapImage::MAX_SIZE
+    "Invalid size! Width and height must be between #{min} and #{max}."
+  end
+end
+
+class InvalidBitmapCoordinatesError < BitmapError # :nodoc:
+  def message
+    'Invalid coordinates! X and/or Y are out of bounds.'
   end
 end
